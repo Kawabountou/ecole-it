@@ -2,8 +2,6 @@
 #
 # GLPI install script
 #
-# Author: jr0w3
-# Version: 1.1.1
 #
 
 function warn(){
@@ -248,7 +246,6 @@ info "glpi_user password:      $SQLGLPIPWD"
 info "GLPI database name:          glpi"
 info "<==========================================>"
 echo ""
-info "If you encounter any issue with this script, please report it on GitHub: https://github.com/jr0w3/GLPI_install_script/issues"
 }
 
 
