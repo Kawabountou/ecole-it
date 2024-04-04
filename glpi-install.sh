@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 # GLPI install script
-#
-#
+# Script a lancer en administrateur
+# Permet de faire une présentation de GLPI pour les élèves
 
 function warn(){
     echo -e '\e[31m'$1'\e[0m';
