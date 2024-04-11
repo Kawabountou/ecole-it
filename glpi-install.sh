@@ -1,5 +1,6 @@
 #!/bin/bash
 #
+#
 # GLPI install script
 # Script a lancer en administrateur
 # Permet de faire une présentation de GLPI pour les élèves
