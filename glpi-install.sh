@@ -143,38 +143,35 @@ systemctl enable apache2
 
 function mariadb_configure()
 {
-info "Configuring MariaDB..."
-sleep 1
-SLQROOTPWD=$(openssl rand -base64 48 | cut -c1-12 )
-SQLGLPIPWD=$(openssl rand -base64 48 | cut -c1-12 )
-systemctl start mariadb
-sleep 1
+    info "Configuring MariaDB..."
+    sleep 1
+    SLQROOTPWD=$(openssl rand -base64 48 | cut -c1-12 )
+    SQLGLPIPWD=$(openssl rand -base64 48 | cut -c1-12 )
+    
+    systemctl start mariadb
+    sleep 1
 
-# Remove anonymous user accounts
-mysql -e "DELETE FROM mysql.user WHERE User = ''"
-# Disable remote root login
-mysql -e "DELETE FROM mysql.user WHERE User = 'root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')"
-# Remove the test database
-mysql -e "DROP DATABASE test"
-# Reload privileges
-mysql -e "FLUSH PRIVILEGES"
-# Create a new database
-mysql -e "CREATE DATABASE glpi"
-# Create a new user
-mysql -e "CREATE USER 'glpi_user'@'localhost' IDENTIFIED BY '$SQLGLPIPWD'"
-# Grant privileges to the new user for the new database
-mysql -e "GRANT ALL PRIVILEGES ON glpi.* TO 'glpi_user'@'localhost'"
-# Reload privileges
-mysql -e "FLUSH PRIVILEGES"
+    # On utilise "mariadb" au lieu de "mysql" et on s'assure de passer par le socket
+    # On crée un fichier temporaire .my.cnf pour automatiser l'auth si besoin
+    
+    # Suppression des utilisateurs anonymes et base de test
+    mariadb -u root <<EOF
+DELETE FROM mysql.user WHERE User = '';
+DELETE FROM mysql.user WHERE User = 'root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+DROP DATABASE IF EXISTS test;
+CREATE DATABASE IF NOT EXISTS glpi;
+CREATE USER IF NOT EXISTS 'glpi_user'@'localhost' IDENTIFIED BY '$SQLGLPIPWD';
+GRANT ALL PRIVILEGES ON glpi.* TO 'glpi_user'@'localhost';
+GRANT SELECT ON mysql.time_zone_name TO 'glpi_user'@'localhost';
+ALTER USER 'root'@'localhost' IDENTIFIED BY '$SLQROOTPWD';
+FLUSH PRIVILEGES;
+EOF
 
-# Initialize time zones datas
-mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql mysql
-#Ask tz
-dpkg-reconfigure tzdata
-systemctl restart mariadb
-sleep 1
-mysql -e "GRANT SELECT ON mysql.time_zone_name TO 'glpi_user'@'localhost'"
-mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$SLQROOTPWD'"
+    # Initialisation des timezones
+    mysql_tzinfo_to_sql /usr/share/zoneinfo | mariadb -u root -p"$SLQROOTPWD" mysql
+    
+    dpkg-reconfigure tzdata
+    systemctl restart mariadb
 }
 
 function install_glpi()
